@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResumeIQ — AI Resume Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    
+    :root {
+      --bg-base:      #080b14;
+      --bg-surface:   #0d1220;
+      --bg-card:      #111827;
+      --bg-card-hover:#141e30;
+      --border:       rgba(99,179,237,0.12);
+      --border-bright:rgba(99,179,237,0.3);
+
+      --accent:       #4f9cf9;
+      --accent-2:     #a78bfa;
+      --accent-3:     #34d399;
+      --accent-warn:  #fb923c;
+      --accent-danger:#f87171;
+
+      --text-primary: #f0f4ff;
+      --text-secondary:#8b9ec7;
+      --text-muted:   #4a5878;
+
+      --grad-hero:    linear-gradient(135deg, #1a2740 0%, #0d1220 50%, #0a0f1e 100%);
+      --grad-accent:  linear-gradient(135deg, #4f9cf9, #a78bfa);
+      --grad-success: linear-gradient(135deg, #34d399, #059669);
+      --grad-warn:    linear-gradient(135deg, #fb923c, #f59e0b);
+
+      --radius-sm:    8px;
+      --radius-md:    14px;
+      --radius-lg:    20px;
+      --radius-xl:    28px;
+
+      --shadow-card:  0 4px 24px rgba(0,0,0,0.4), 0 1px 4px rgba(0,0,0,0.3);
+      --shadow-glow:  0 0 40px rgba(79,156,249,0.15);
+
+      --font-display: 'Syne', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Animated mesh background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(79,156,249,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(167,139,250,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ═══════════════════════ SCROLLBAR ═══════════════════════════ */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 99px; }
+
+    /* ═══════════════════════ UTILITIES ═══════════════════════════ */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 99px; font-size: 11px;
+      font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .badge-blue  { background: rgba(79,156,249,0.12); color: var(--accent); border: 1px solid rgba(79,156,249,0.2); }
+    .badge-purple{ background: rgba(167,139,250,0.12); color: var(--accent-2); border: 1px solid rgba(167,139,250,0.2); }
+    .badge-green { background: rgba(52,211,153,0.12); color: var(--accent-3); border: 1px solid rgba(52,211,153,0.2); }
+    .badge-orange{ background: rgba(251,146,60,0.12); color: var(--accent-warn); border: 1px solid rgba(251,146,60,0.2); }
+    .badge-red   { background: rgba(248,113,113,0.12); color: var(--accent-danger); border: 1px solid rgba(248,113,113,0.2); }
+
+    /* ═══════════════════════ NAV ═════════════════════════════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(8,11,20,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .nav-logo {
+      font-family: var(--font-display); font-size: 20px; font-weight: 800;
+      background: var(--grad-accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+    .nav-logo span { -webkit-text-fill-color: var(--text-secondary); font-weight: 400; }
+    .nav-badge {
+      font-size: 10px; font-weight: 700; background: var(--grad-accent);
+      color: #fff; padding: 2px 8px; border-radius: 99px; letter-spacing: 0.06em;
+    }
+
+    /* ═══════════════════════ HERO ════════════════════════════════ */
+    .hero {
+      padding: 140px 24px 80px;
+      text-align: center;
+      position: relative;
+    }
+    .hero-eyebrow {
+      display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(38px, 6vw, 68px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+    }
+    .hero-title .gradient {
+      background: var(--grad-accent);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+      font-size: 17px; color: var(--text-secondary);
+      max-width: 560px; margin: 0 auto 40px;
+      font-weight: 300;
+    }
+
+    .feature-pills {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+      margin-bottom: 60px;
+    }
+    .pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 99px;
+      font-size: 13px; color: var(--text-secondary);
+      transition: var(--transition);
+    }
+    .pill:hover { border-color: var(--accent); color: var(--text-primary); }
+    .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-3); }
+
+    /* ═══════════════════════ MAIN CARD ═══════════════════════════ */
+    .main-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-card), var(--shadow-glow);
+      margin-bottom: 60px;
+      position: relative;
+    }
+    .main-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: var(--grad-accent); opacity: 0.6;
+    }
+
+    /* Step indicator */
+    .steps-bar {
+      display: flex; border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+      overflow-x: auto;
+    }
+    .step-tab {
+      flex: 1; min-width: 120px; padding: 16px 20px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; color: var(--text-muted);
+      border-right: 1px solid var(--border);
+      transition: var(--transition); cursor: pointer;
+      user-select: none;
+    }
+    .step-tab:last-child { border-right: none; }
+    .step-tab.active { background: rgba(79,156,249,0.06); color: var(--accent); }
+    .step-tab.completed { color: var(--accent-3); }
+    .step-tab.disabled { pointer-events: none; opacity: 0.4; }
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+      background: var(--bg-card); border: 1px solid var(--border);
+    }
+    .step-tab.active .step-num { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .step-tab.completed .step-num { background: var(--accent-3); border-color: var(--accent-3); color: #000; }
+
+    /* ═══════════════════════ PANELS ══════════════════════════════ */
+    .panel { display: none; padding: 36px; animation: fadeIn 0.4s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .panel-title {
+      font-family: var(--font-display); font-size: 22px; font-weight: 700;
+      margin-bottom: 6px; letter-spacing: -0.02em;
+    }
+    .panel-subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; }
+
+    /* ═══════════════════════ UPLOAD ZONE ════════════════════════ */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg); padding: 48px 24px;
+      text-align: center; cursor: pointer;
+      transition: var(--transition); position: relative;
+      background: rgba(79,156,249,0.02);
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--accent); background: rgba(79,156,249,0.06);
+    }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-icon {
+      width: 56px; height: 56px; margin: 0 auto 16px;
+      background: rgba(79,156,249,0.1); border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; transition: var(--transition);
+    }
+    .upload-zone:hover .upload-icon { background: rgba(79,156,249,0.2); transform: scale(1.05); }
+    .upload-text { font-weight: 600; margin-bottom: 4px; }
+    .upload-hint { font-size: 13px; color: var(--text-muted); }
+
+    .divider {
+      display: flex; align-items: center; gap: 16px;
+      margin: 24px 0; color: var(--text-muted); font-size: 13px;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ═══════════════════════ FORM ELEMENTS ══════════════════════ */
+    textarea, input[type="text"] {
+      width: 100%; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); color: var(--text-primary);
+      font-family: var(--font-body); font-size: 14px; resize: vertical;
+      transition: var(--transition); outline: none; padding: 14px 16px;
+    }
+    textarea { min-height: 160px; }
+    textarea:focus, input[type="text"]:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,156,249,0.1);
+    }
+    textarea::placeholder, input::placeholder { color: var(--text-muted); }
+
+    label {
+      display: block; font-size: 13px; font-weight: 600;
+      color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.02em;
+    }
+
+    .form-row { margin-bottom: 20px; }
+    .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+    /* ═══════════════════════ BUTTONS ════════════════════════════ */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; border-radius: var(--radius-md);
+      font-family: var(--font-body); font-size: 14px; font-weight: 600;
+      cursor: pointer; border: none; transition: var(--transition);
+      position: relative; overflow: hidden; text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--grad-accent); color: #fff;
+      box-shadow: 0 4px 20px rgba(79,156,249,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(79,156,249,0.4); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-outline {
+      background: transparent; color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,156,249,0.05); }
+    .btn-ghost {
+      background: transparent; color: var(--text-secondary);
+      padding: 8px 16px; font-size: 13px;
+    }
+    .btn-ghost:hover { color: var(--text-primary); }
+    .btn-sm { padding: 7px 14px; font-size: 12px; }
+    .btn-icon { width: 36px; height: 36px; padding: 0; justify-content: center; }
+    .btn-green { background: var(--grad-success); color: #fff; box-shadow: 0 4px 20px rgba(52,211,153,0.3); }
+    .btn-green:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    /* Spinner */
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════ LOADING STATE ══════════════════════ */
+    .loading-overlay {
+      display: none; flex-direction: column; align-items: center;
+      justify-content: center; padding: 80px 36px; text-align: center;
+    }
+    .loading-overlay.active { display: flex; }
+    .loading-orb {
+      width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 28px;
+      background: var(--grad-accent);
+      box-shadow: 0 0 40px rgba(79,156,249,0.4);
+      animation: pulse-orb 2s ease-in-out infinite;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+    }
+    @keyframes pulse-orb {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(79,156,249,0.4); }
+      50% { transform: scale(1.08); box-shadow: 0 0 60px rgba(79,156,249,0.6); }
+    }
+    .loading-title {
+      font-family: var(--font-display); font-size: 22px; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .loading-msg { color: var(--text-secondary); font-size: 14px; min-height: 24px; }
+    .loading-steps {
+      margin-top: 32px; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 340px;
+    }
+    .loading-step {
+      display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+      background: var(--bg-card); border-radius: var(--radius-md);
+      font-size: 13px; color: var(--text-muted);
+      border: 1px solid var(--border); text-align: left;
+    }
+    .loading-step.done { color: var(--accent-3); border-color: rgba(52,211,153,0.2); }
+    .loading-step.active { color: var(--accent); border-color: rgba(79,156,249,0.2); animation: pulse-step 1s ease-in-out infinite; }
+    @keyframes pulse-step { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+    .step-check { font-size: 14px; }
+
+    /* ═══════════════════════ RESULTS DASHBOARD ══════════════════ */
+    #results-panel { display: none; }
+    #results-panel.active { display: block; }
+
+    .dashboard-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px; margin-bottom: 32px;
+      padding-bottom: 24px; border-bottom: 1px solid var(--border);
+    }
+    .dashboard-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ─── ATS Score Card ─── */
+    .ats-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 28px;
+      margin-bottom: 20px; position: relative; overflow: hidden;
+    }
+    .ats-card::before {
+      content: ''; position: absolute; top: 0; right: 0;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(79,156,249,0.06) 0%, transparent 70%);
+    }
+    .ats-layout { display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: center; }
+    @media(max-width:600px){ .ats-layout { grid-template-columns: 1fr; } }
+
+    .ats-ring-wrap { position: relative; width: 130px; height: 130px; flex-shrink: 0; }
+    .ats-ring-svg { width: 130px; height: 130px; transform: rotate(-90deg); }
+    .ats-ring-bg { fill: none; stroke: var(--bg-surface); stroke-width: 10; }
+    .ats-ring-prog {
+      fill: none; stroke-width: 10; stroke-linecap: round;
+      stroke-dasharray: 339.3; stroke-dashoffset: 339.3;
+      transition: stroke-dashoffset 2s cubic-bezier(0.4,0,0.2,1);
+    }
+    .ats-ring-prog.high { stroke: url(#grad-green); }
+    .ats-ring-prog.medium { stroke: url(#grad-orange); }
+    .ats-ring-prog.low { stroke: url(#grad-red); }
+
+    .ats-ring-text {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .ats-score-num {
+      font-family: var(--font-display); font-size: 32px; font-weight: 800; line-height: 1;
+    }
+    .ats-score-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.06em; margin-top: 2px; }
+
+    .ats-info { }
+    .ats-verdict {
+      font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 8px;
+    }
+    .ats-explanation { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 16px; }
+    .ats-components { display: flex; flex-wrap: wrap; gap: 10px; }
+    .ats-comp {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;
+    }
+    .ats-comp-name { color: var(--text-muted); margin-bottom: 3px; }
+    .ats-comp-score { font-weight: 700; color: var(--text-primary); }
+    .progress-bar-wrap { height: 4px; background: var(--bg-surface); border-radius: 99px; margin-top: 4px; overflow: hidden; }
+    .progress-bar-fill {
+      height: 100%; border-radius: 99px;
+      background: var(--grad-accent);
+      transition: width 1.5s cubic-bezier(0.4,0,0.2,1) 0.3s;
+    }
+
+    /* ─── Cards Grid ─── */
+    .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media(max-width:680px){ .cards-grid { grid-template-columns: 1fr; } }
+
+    .result-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 22px; transition: var(--transition);
+    }
+    .result-card:hover { border-color: var(--border-bright); transform: translateY(-1px); }
+
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-family: var(--font-display); font-size: 14px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-icon {
+      width: 30px; height: 30px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .icon-blue   { background: rgba(79,156,249,0.15); }
+    .icon-purple { background: rgba(167,139,250,0.15); }
+    .icon-green  { background: rgba(52,211,153,0.15); }
+    .icon-orange { background: rgba(251,146,60,0.15); }
+    .icon-red    { background: rgba(248,113,113,0.15); }
+
+    /* Skill chips */
+    .skill-list { display: flex; flex-wrap: wrap; gap: 7px; }
+    .skill-chip {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 500;
+      transition: var(--transition);
+    }
+    .chip-green { background: rgba(52,211,153,0.1); color: var(--accent-3); border: 1px solid rgba(52,211,153,0.2); }
+    .chip-red   { background: rgba(248,113,113,0.1); color: var(--accent-danger); border: 1px solid rgba(248,113,113,0.2); }
+    .chip-orange{ background: rgba(251,146,60,0.1); color: var(--accent-warn); border: 1px solid rgba(251,146,60,0.2); }
+    .chip-blue  { background: rgba(79,156,249,0.1); color: var(--accent); border: 1px solid rgba(79,156,249,0.2); }
+    .importance-critical { color: var(--accent-danger); }
+    .importance-important { color: var(--accent-warn); }
+    .importance-nice { color: var(--text-muted); }
+
+    /* ─── Suggestions ─── */
+    .full-card { grid-column: 1 / -1; }
+    .suggestion-item {
+      padding: 16px; border-radius: var(--radius-md); margin-bottom: 10px;
+      border: 1px solid var(--border); background: var(--bg-surface);
+      transition: var(--transition);
+    }
+    .suggestion-item:hover { border-color: var(--border-bright); }
+    .suggestion-item:last-child { margin-bottom: 0; }
+    .sug-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .sug-title { font-size: 13px; font-weight: 600; }
+    .sug-body { font-size: 12px; color: var(--text-secondary); line-height: 1.7; }
+    .sug-reasoning {
+      margin-top: 8px; padding: 8px 12px;
+      background: rgba(79,156,249,0.05); border-left: 2px solid var(--accent);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 12px; color: var(--text-secondary); font-style: italic;
+    }
+    .sug-how {
+      margin-top: 8px; padding: 8px 12px;
+      background: rgba(52,211,153,0.05); border-left: 2px solid var(--accent-3);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 12px; color: var(--text-secondary);
+    }
+    .sug-how strong { color: var(--accent-3); }
+
+    /* ─── Before/After ─── */
+    .before-after {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;
+    }
+    @media(max-width:600px){ .before-after { grid-template-columns: 1fr; } }
+    .ba-box { padding: 14px; border-radius: var(--radius-md); }
+    .ba-before { background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.15); }
+    .ba-after  { background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.15); }
+    .ba-label  { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+    .ba-before .ba-label { color: var(--accent-danger); }
+    .ba-after  .ba-label { color: var(--accent-3); }
+    .ba-text   { font-size: 13px; line-height: 1.65; }
+    .ba-reason {
+      font-size: 11px; color: var(--accent-2); margin-top: 6px; font-style: italic;
+    }
+
+    /* ─── Cover Letter ─── */
+    .cover-letter-box {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 24px;
+      font-size: 14px; line-height: 1.8; color: var(--text-primary);
+      white-space: pre-wrap; word-break: break-word;
+      max-height: 480px; overflow-y: auto;
+    }
+
+    /* ─── Copy button ─── */
+    .copy-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; font-size: 11px; font-weight: 600;
+      border-radius: 99px; cursor: pointer; border: none;
+      background: var(--bg-surface); color: var(--text-muted);
+      border: 1px solid var(--border); transition: var(--transition);
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .copy-btn.copied { background: rgba(52,211,153,0.1); color: var(--accent-3); border-color: rgba(52,211,153,0.3); }
+
+    /* ─── Profile Summary ─── */
+    .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+    .profile-stat {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px; text-align: center;
+    }
+    .profile-stat-val {
+      font-family: var(--font-display); font-size: 22px; font-weight: 800;
+      background: var(--grad-accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .profile-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ─── Alignment Reasoning ─── */
+    .alignment-box {
+      background: rgba(167,139,250,0.06); border: 1px solid rgba(167,139,250,0.15);
+      border-radius: var(--radius-md); padding: 16px;
+      font-size: 13px; color: var(--text-secondary); line-height: 1.75;
+    }
+
+    /* ─── Alert / Toast ─── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px 18px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; box-shadow: var(--shadow-card);
+      transform: translateY(100px); opacity: 0;
+      transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+      max-width: 340px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(52,211,153,0.3); }
+    .toast.error   { border-color: rgba(248,113,113,0.3); }
+
+    /* ─── Error box ─── */
+    .error-box {
+      background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.2);
+      border-radius: var(--radius-md); padding: 16px; margin-top: 16px;
+      font-size: 13px; color: var(--accent-danger); display: none;
+    }
+    .error-box.show { display: flex; gap: 10px; align-items: flex-start; }
+
+    /* ─── Tabs inside card ─── */
+    .inner-tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+    .inner-tab {
+      padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: var(--transition); border: 1px solid transparent;
+      color: var(--text-muted);
+    }
+    .inner-tab.active { background: rgba(79,156,249,0.12); color: var(--accent); border-color: rgba(79,156,249,0.2); }
+    .inner-tab:hover:not(.active) { color: var(--text-primary); border-color: var(--border); }
+    .inner-panel { display: none; }
+    .inner-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+    /* ─── Info chips strip ─── */
+    .info-strip {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;
+    }
+
+    /* ─── Quick wins box ─── */
+    .quickwins-box {
+      background: rgba(52,211,153,0.04); border: 1px solid rgba(52,211,153,0.15);
+      border-radius: var(--radius-md); padding: 16px; margin-top: 16px;
+    }
+    .quickwins-title { font-size: 12px; font-weight: 700; color: var(--accent-3); margin-bottom: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .quickwins-item { font-size: 13px; color: var(--text-secondary); padding: 4px 0; display: flex; gap: 8px; }
+    .quickwins-item::before { content: '⚡'; flex-shrink: 0; }
+
+    /* ─── Footer ─── */
+    footer {
+      border-top: 1px solid var(--border); padding: 32px 24px;
+      text-align: center; font-size: 12px; color: var(--text-muted);
+    }
+    footer strong { color: var(--text-secondary); }
+
+    /* ═══════════════════ FILE PREVIEW ══════════════════════════ */
+    .file-preview {
+      display: none; align-items: center; gap: 12px;
+      background: var(--bg-card); border: 1px solid var(--border-bright);
+      border-radius: var(--radius-md); padding: 14px 16px; margin-top: 12px;
+    }
+    .file-preview.show { display: flex; }
+    .file-icon { font-size: 24px; }
+    .file-details { flex: 1; min-width: 0; }
+    .file-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-meta { font-size: 12px; color: var(--text-muted); }
+    .file-remove {
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 18px; padding: 4px;
+      transition: color var(--transition);
+    }
+    .file-remove:hover { color: var(--accent-danger); }
+
+    /* ─── Collapsible ─── */
+    .collapse-btn {
+      background: none; border: none; color: var(--accent);
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 4px; padding: 0; font-family: var(--font-body);
+    }
+    .collapse-content { display: none; margin-top: 10px; animation: fadeIn 0.3s ease; }
+    .collapse-content.open { display: block; }
+
+    /* ─── Match % bar ─── */
+    .match-bar-wrap { margin: 12px 0; }
+    .match-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .match-bar { height: 8px; background: var(--bg-surface); border-radius: 99px; overflow: hidden; }
+    .match-bar-fill { height: 100%; border-radius: 99px; background: var(--grad-accent); transition: width 1.5s cubic-bezier(0.4,0,0.2,1) 0.5s; }
+
+    /* ─── Responsive ─── */
+    @media(max-width:768px) {
+      .panel { padding: 20px; }
+      .hero { padding: 110px 16px 60px; }
+      nav { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════ NAV ═══════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">Resume<span>IQ</span></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="nav-badge">🤖 AI Powered</span>
+      <span style="font-size:12px;color:var(--text-muted)" id="nav-status">● Ready</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════ HERO ════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-eyebrow">
+    <span class="badge badge-blue">🤖 Prompt Engineering</span>
+    <span class="badge badge-purple">🧠 Semantic Analysis</span>
+    <span class="badge badge-green">⚡ LLM Reasoning</span>
+  </div>
+  <h1 class="hero-title">
+    Your Resume.<br>
+    <span class="gradient">Supercharged by AI.</span>
+  </h1>
+  <p class="hero-subtitle">
+    Upload your resume and a job description. Our AI-powered engine
+    semantically analyzes fit, scores ATS compatibility, and generates
+    a personalized cover letter — in seconds.
+  </p>
+  <div class="feature-pills">
+    <div class="pill"><span class="pill-dot"></span>ATS Score (AI-Driven)</div>
+    <div class="pill"><span class="pill-dot" style="background:var(--accent-2)"></span>Semantic Skill Match</div>
+    <div class="pill"><span class="pill-dot" style="background:var(--accent-warn)"></span>Resume Improvement</div>
+    <div class="pill"><span class="pill-dot" style="background:var(--accent-danger)"></span>AI Suggestions + Reasoning</div>
+    <div class="pill"><span class="pill-dot" style="background:var(--accent)"></span>Cover Letter Generator</div>
+  </div>
+</section>
+
+<!-- ═══════ MAIN APP CARD ══════════════════════════════════════════ -->
+<div class="container">
+<div class="main-card" id="main-card">
+
+  <!-- Steps Bar -->
+  <div class="steps-bar">
+    <div class="step-tab active" id="tab-upload" onclick="goToStep(1)">
+      <span class="step-num">1</span> Upload Resume
+    </div>
+    <div class="step-tab disabled" id="tab-jd" onclick="goToStep(2)">
+      <span class="step-num">2</span> Job Description
+    </div>
+    <div class="step-tab disabled" id="tab-results" onclick="goToStep(3)">
+      <span class="step-num">3</span> AI Analysis
+    </div>
+    <div class="step-tab disabled" id="tab-cover" onclick="goToStep(4)">
+      <span class="step-num">4</span> Cover Letter
+    </div>
+  </div>
+
+  <!-- ─── STEP 1: Upload Resume ─── -->
+  <div class="panel active" id="panel-upload">
+    <h2 class="panel-title">Upload Your Resume</h2>
+    <p class="panel-subtitle">Upload a PDF or paste your resume text below. We'll extract structured data using advanced AI.</p>
+
+    <!-- Upload Zone -->
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".pdf" />
+      <div class="upload-icon">📄</div>
+      <div class="upload-text">Drag & drop your PDF resume here</div>
+      <div class="upload-hint">Supports PDF up to 5MB</div>
+    </div>
+
+    <!-- File Preview -->
+    <div class="file-preview" id="file-preview">
+      <span class="file-icon">📄</span>
+      <div class="file-details">
+        <div class="file-name" id="file-name-display">resume.pdf</div>
+        <div class="file-meta" id="file-meta-display">1 page · 4.2 KB</div>
+      </div>
+      <button class="file-remove" onclick="removeFile()" title="Remove file">✕</button>
+    </div>
+
+    <div class="divider">or paste text</div>
+
+    <div class="form-row">
+      <label for="resume-text-input">Resume Text</label>
+      <textarea id="resume-text-input" placeholder="Paste your resume content here...&#10;&#10;John Doe&#10;Software Engineer | john@email.com&#10;&#10;EXPERIENCE&#10;Software Developer at XYZ Corp (2021–2024)&#10;• Built REST APIs using Node.js and Express..." rows="10"></textarea>
+      <div class="form-hint">Paste the full text of your resume including all sections.</div>
+    </div>
+
+    <div class="error-box" id="upload-error">
+      <span>⚠️</span><span id="upload-error-msg">Error message here</span>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-primary" onclick="handleUpload()" id="upload-btn">
+        Continue →
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── STEP 2: Job Description ─── -->
+  <div class="panel" id="panel-jd">
+    <h2 class="panel-title">Target Job Description</h2>
+    <p class="panel-subtitle">Paste the job description you're applying for. Our AI will semantically analyze the fit between your resume and this role.</p>
+
+    <div class="form-row">
+      <label for="jd-input">Job Description *</label>
+      <textarea id="jd-input" placeholder="Paste the full job description here...&#10;&#10;Example:&#10;We are looking for a Full Stack Developer to join our team...&#10;&#10;Requirements:&#10;• 3+ years experience with React and Node.js&#10;• Proficiency in PostgreSQL or MongoDB&#10;• Experience with AWS or GCP..." rows="14"></textarea>
+      <div class="form-hint">Include the full JD: responsibilities, requirements, and nice-to-haves for the most accurate analysis.</div>
+    </div>
+
+    <div class="error-box" id="jd-error">
+      <span>⚠️</span><span id="jd-error-msg">Error message here</span>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px">
+      <button class="btn btn-outline" onclick="goToStep(1)">← Back</button>
+      <button class="btn btn-primary" onclick="startAnalysis()" id="analyze-btn">
+        🤖 Analyze with AI
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── LOADING ─── -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-orb">🤖</div>
+    <div class="loading-title">Analyzing with AI</div>
+    <div class="loading-msg" id="loading-msg">Initializing AI pipeline...</div>
+    <div class="loading-steps">
+      <div class="loading-step" id="ls-1"><span class="step-check">⏳</span> Extracting resume data</div>
+      <div class="loading-step" id="ls-2"><span class="step-check">⏳</span> Semantic matching</div>
+      <div class="loading-step" id="ls-3"><span class="step-check">⏳</span> Calculating ATS score</div>
+      <div class="loading-step" id="ls-4"><span class="step-check">⏳</span> Generating improvements</div>
+      <div class="loading-step" id="ls-5"><span class="step-check">⏳</span> AI suggestions + reasoning</div>
+    </div>
+  </div>
+
+  <!-- ─── STEP 3: Results Dashboard ─── -->
+  <div class="panel" id="panel-results">
+
+    <div class="dashboard-header">
+      <div>
+        <h2 class="panel-title">AI Analysis Dashboard</h2>
+        <p class="panel-subtitle" style="margin-bottom:0">Context-Aware Analysis · Semantic Matching · LLM Reasoning</p>
+      </div>
+      <div class="dashboard-actions">
+        <button class="btn btn-outline btn-sm" onclick="goToStep(2)">← Edit JD</button>
+        <button class="btn btn-primary btn-sm" onclick="goToStep(4)" id="cover-letter-btn">✍️ Cover Letter</button>
+      </div>
+    </div>
+
+    <!-- Profile Info Strip -->
+    <div class="info-strip" id="profile-strip"></div>
+
+    <!-- ATS Score -->
+    <div class="ats-card" id="ats-card">
+      <svg width="0" height="0">
+        <defs>
+          <linearGradient id="grad-green" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#34d399"/>
+            <stop offset="100%" style="stop-color:#059669"/>
+          </linearGradient>
+          <linearGradient id="grad-orange" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#fb923c"/>
+            <stop offset="100%" style="stop-color:#f59e0b"/>
+          </linearGradient>
+          <linearGradient id="grad-red" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#f87171"/>
+            <stop offset="100%" style="stop-color:#ef4444"/>
+          </linearGradient>
+          <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#4f9cf9"/>
+            <stop offset="100%" style="stop-color:#a78bfa"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="card-header">
+        <div class="card-title">
+          <div class="card-icon icon-blue">📊</div>
+          ATS Score Analysis
+        </div>
+        <button class="copy-btn" onclick="copyText('ats-explanation-full', this)">📋 Copy</button>
+      </div>
+      <div class="ats-layout">
+        <div class="ats-ring-wrap">
+          <svg class="ats-ring-svg" viewBox="0 0 120 120">
+            <circle class="ats-ring-bg" cx="60" cy="60" r="54"/>
+            <circle class="ats-ring-prog" id="ats-ring-prog" cx="60" cy="60" r="54"/>
+          </svg>
+          <div class="ats-ring-text">
+            <div class="ats-score-num" id="ats-score-num">—</div>
+            <div class="ats-score-label">/ 100</div>
+          </div>
+        </div>
+        <div class="ats-info">
+          <div class="ats-verdict" id="ats-verdict">Analyzing...</div>
+          <div class="ats-explanation" id="ats-explanation"></div>
+          <div id="ats-explanation-full" style="display:none"></div>
+          <div class="ats-components" id="ats-components"></div>
+        </div>
+      </div>
+      <div class="match-bar-wrap" style="margin-top:20px">
+        <div class="match-bar-label">
+          <span>Semantic Alignment</span>
+          <span id="match-pct">—%</span>
+        </div>
+        <div class="match-bar"><div class="match-bar-fill" id="match-bar-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- Skills Cards -->
+    <div class="cards-grid">
+
+      <!-- Matching Skills -->
+      <div class="result-card">
+        <div class="card-header">
+          <div class="card-title"><div class="card-icon icon-green">✅</div> Matching Skills</div>
+          <span id="match-count" class="badge badge-green">0</span>
+        </div>
+        <div class="skill-list" id="matching-skills-list"></div>
+      </div>
+
+      <!-- Missing Skills -->
+      <div class="result-card">
+        <div class="card-header">
+          <div class="card-title"><div class="card-icon icon-red">❌</div> Missing Skills</div>
+          <span id="missing-count" class="badge badge-red">0</span>
+        </div>
+        <div class="skill-list" id="missing-skills-list"></div>
+      </div>
+
+      <!-- Alignment Reasoning -->
+      <div class="result-card full-card">
+        <div class="card-header">
+          <div class="card-title"><div class="card-icon icon-purple">🧠</div> AI Alignment Reasoning</div>
+          <button class="copy-btn" onclick="copyElement('alignment-reasoning', this)">📋 Copy</button>
+        </div>
+        <div class="alignment-box" id="alignment-reasoning"></div>
+        <div id="red-flags-wrap" style="margin-top:12px;display:none">
+          <div style="font-size:12px;font-weight:700;color:var(--accent-danger);margin-bottom:8px">⚠️ Recruiter Concerns</div>
+          <div id="red-flags"></div>
+        </div>
+      </div>
+
+      <!-- AI Suggestions -->
+      <div class="result-card full-card">
+        <div class="card-header">
+          <div class="card-title"><div class="card-icon icon-orange">💡</div> AI Suggestions with Reasoning</div>
+          <span id="sug-count" class="badge badge-orange">0</span>
+        </div>
+        <div id="suggestions-list"></div>
+        <div class="quickwins-box" id="quickwins-box" style="display:none">
+          <div class="quickwins-title">⚡ Quick Wins (do these first)</div>
+          <div id="quickwins-list"></div>
+        </div>
+      </div>
+
+      <!-- Resume Improvements -->
+      <div class="result-card full-card">
+        <div class="card-header">
+          <div class="card-title"><div class="card-icon icon-blue">✨</div> AI Resume Improvements</div>
+          <button class="btn btn-outline btn-sm" onclick="downloadImprovedResume()">⬇️ Download PDF</button>
+        </div>
+        <div class="inner-tabs">
+          <div class="inner-tab active" onclick="switchImprovementTab('summary', this)">Summary</div>
+          <div class="inner-tab" onclick="switchImprovementTab('bullets', this)">Bullet Points</div>
+          <div class="inner-tab" onclick="switchImprovementTab('skills', this)">Skills Section</div>
+        </div>
+        <div class="inner-panel active" id="imp-summary">
+          <div class="before-after" id="imp-summary-ba"></div>
+        </div>
+        <div class="inner-panel" id="imp-bullets">
+          <div id="imp-bullets-list"></div>
+        </div>
+        <div class="inner-panel" id="imp-skills">
+          <div class="before-after" id="imp-skills-ba"></div>
+          <div id="imp-new-sections"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── STEP 4: Cover Letter ─── -->
+  <div class="panel" id="panel-cover">
+    <div class="dashboard-header">
+      <div>
+        <h2 class="panel-title">AI Cover Letter Generator</h2>
+        <p class="panel-subtitle" style="margin-bottom:0">Personalized, human-like cover letter generated by advanced AI</p>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="goToStep(3)">← Back to Analysis</button>
+    </div>
+
+    <!-- Cover letter loading -->
+    <div id="cover-loading" style="text-align:center;padding:60px 24px;display:none">
+      <div class="loading-orb" style="width:60px;height:60px;font-size:24px;margin:0 auto 16px">✍️</div>
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:6px">Crafting Your Cover Letter</div>
+      <div style="font-size:13px;color:var(--text-secondary)">AI is writing a personalized, human-like letter...</div>
+    </div>
+
+    <div id="cover-content" style="display:none">
+      <div class="result-card" style="margin-bottom:16px">
+        <div class="card-header">
+          <div class="card-title"><div class="card-icon icon-blue">📧</div> Subject Line</div>
+        </div>
+        <div id="cover-subject" style="font-size:14px;font-weight:600;color:var(--text-primary)"></div>
+      </div>
+
+      <div class="result-card" style="margin-bottom:16px">
+        <div class="card-header">
+          <div class="card-title"><div class="card-icon icon-green">📝</div> Cover Letter</div>
+          <div style="display:flex;gap:8px">
+            <button class="copy-btn" onclick="copyElement('cover-letter-body', this)">📋 Copy</button>
+            <button class="btn btn-green btn-sm" onclick="downloadCoverLetter()">⬇️ Download</button>
+          </div>
+        </div>
+        <div class="cover-letter-box" id="cover-letter-body"></div>
+      </div>
+
+      <div class="result-card">
+        <div class="card-header">
+          <div class="card-title"><div class="card-icon icon-purple">🎯</div> Writing Strategy</div>
+        </div>
+        <div id="cover-strategy" style="font-size:13px;color:var(--text-secondary);line-height:1.7"></div>
+        <div id="cover-highlights" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:7px"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-card -->
+
+<!-- Error card (global) -->
+<div id="global-error" style="display:none;margin-bottom:20px" class="result-card">
+  <div style="display:flex;align-items:flex-start;gap:12px">
+    <span style="font-size:24px">❌</span>
+    <div>
+      <div style="font-weight:700;margin-bottom:4px;color:var(--accent-danger)">Analysis Failed</div>
+      <div id="global-error-msg" style="font-size:13px;color:var(--text-secondary)"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="goToStep(1)">← Start Over</button>
+        <button class="btn btn-primary btn-sm" onclick="startAnalysis()">🔄 Retry</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ═══════ FOOTER ════════════════════════════════════════════════ -->
+<footer>
+  <strong>ResumeIQ</strong> — AI-Powered Resume Analyzer ·
+  Demonstrates Prompt Engineering, Semantic Analysis, Context-Aware Generation & LLM Reasoning
+</footer>
+
+<!-- ═══════ TOAST ══════════════════════════════════════════════════ -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✅</span>
+  <span id="toast-msg">Copied!</span>
+</div>
+
+<!-- ════════════════════════ JAVASCRIPT ═══════════════════════════ -->
+<script>
+  // ─── Config ───────────────────────────────────────────────────────────
+  function getApiCandidates() {
+    const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
+    const candidates = [];
+
+    if (window.location.protocol !== 'file:') {
+      candidates.push(`${window.location.origin}/api`);
+    }
+
+    candidates.push(`${protocol}//localhost:5001/api`);
+    candidates.push(`${protocol}//localhost:5000/api`);
+
+    return [...new Set(candidates)];
+  }
+
+  const API_CANDIDATES = getApiCandidates();
+  let API_BASE = API_CANDIDATES[0];
+
+  async function apiFetch(path, options = {}) {
+    let lastError;
+
+    for (const base of API_CANDIDATES) {
+      try {
+        const response = await fetch(`${base}${path}`, options);
+
+        if (response.status === 404 || response.status === 405) {
+          lastError = new Error(`API endpoint rejected ${options.method || 'GET'} ${base}${path} with ${response.status}`);
+          continue;
+        }
+
+        API_BASE = base;
+        return response;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError || new Error('Unable to reach the backend API.');
+  }
+
+  // ─── State ────────────────────────────────────────────────────────────
+  let state = {
+    resumeText: '',
+    jobDescription: '',
+    uploadedFile: null,
+    analysisData: null,
+    coverLetterData: null,
+    currentStep: 1,
+  };
+
+  // ─── Step Navigation ──────────────────────────────────────────────────
+  function goToStep(step) {
+    // Panels
+    const panels = ['upload','jd','results','cover'];
+    panels.forEach((id, i) => {
+      const panel = document.getElementById(`panel-${id}`);
+      if (panel) panel.classList.toggle('active', i + 1 === step);
+    });
+
+    // Loading overlay
+    document.getElementById('loading-overlay').classList.toggle('active', false);
+
+    // Tabs
+    for (let i = 1; i <= 4; i++) {
+      const tab = document.getElementById(`tab-${['upload','jd','results','cover'][i-1]}`);
+      tab.classList.remove('active','completed','disabled');
+      if (i < step) tab.classList.add('completed');
+      else if (i === step) tab.classList.add('active');
+      else if (i > step && (i <= 2 || state.analysisData)) tab.classList.remove('disabled');
+      else tab.classList.add('disabled');
+    }
+
+    state.currentStep = step;
+  }
+
+  // ─── File Handling ────────────────────────────────────────────────────
+  const fileInput = document.getElementById('file-input');
+  const uploadZone = document.getElementById('upload-zone');
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleFileSelect(file);
+  });
+
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault(); uploadZone.classList.add('drag-over');
+  });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault(); uploadZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  });
+
+  function handleFileSelect(file) {
+    if (file.type !== 'application/pdf') {
+      showUploadError('Only PDF files are accepted.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showUploadError('File too large. Maximum size is 5MB.');
+      return;
+    }
+    state.uploadedFile = file;
+    hideUploadError();
+    document.getElementById('file-name-display').textContent = file.name;
+    document.getElementById('file-meta-display').textContent = `${(file.size / 1024).toFixed(1)} KB`;
+    document.getElementById('file-preview').classList.add('show');
+    document.getElementById('resume-text-input').value = '';
+  }
+
+  function removeFile() {
+    state.uploadedFile = null;
+    fileInput.value = '';
+    document.getElementById('file-preview').classList.remove('show');
+  }
+
+  // ─── Step 1: Handle Upload ────────────────────────────────────────────
+  async function handleUpload() {
+    const pastedText = document.getElementById('resume-text-input').value.trim();
+    const btn = document.getElementById('upload-btn');
+
+    if (!state.uploadedFile && !pastedText) {
+      showUploadError('Please upload a PDF or paste your resume text.');
+      return;
+    }
+
+    hideUploadError();
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Processing...';
+
+    try {
+      if (state.uploadedFile) {
+        // Send PDF to backend
+        const formData = new FormData();
+        formData.append('resume', state.uploadedFile);
+        const res = await apiFetch('/upload-resume', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Upload failed');
+        state.resumeText = data.data.resumeText;
+      } else {
+        // Use pasted text
+        state.resumeText = pastedText;
+      }
+
+      goToStep(2);
+    } catch (err) {
+      showUploadError(err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Continue →';
+    }
+  }
+
+  function showUploadError(msg) {
+    const el = document.getElementById('upload-error');
+    document.getElementById('upload-error-msg').textContent = msg;
+    el.classList.add('show');
+  }
+  function hideUploadError() {
+    document.getElementById('upload-error').classList.remove('show');
+  }
+
+  // ─── Step 2: Start Analysis ───────────────────────────────────────────
+  async function startAnalysis() {
+    const jd = document.getElementById('jd-input').value.trim();
+    if (!jd || jd.length < 50) {
+      document.getElementById('jd-error').classList.add('show');
+      document.getElementById('jd-error-msg').textContent = 'Please paste a complete job description (at least 50 characters).';
+      return;
+    }
+    document.getElementById('jd-error').classList.remove('show');
+
+    state.jobDescription = jd;
+
+    // Show loading
+    document.getElementById('panel-jd').classList.remove('active');
+    document.getElementById('loading-overlay').classList.add('active');
+    document.getElementById('global-error').style.display = 'none';
+
+    // Animate loading steps
+    await animateLoadingSteps();
+  }
+
+  const LOADING_STEPS = [
+    { id: 'ls-1', msg: 'Extracting structured data from resume...', delay: 2000 },
+    { id: 'ls-2', msg: 'Running semantic match analysis...', delay: 5000 },
+    { id: 'ls-3', msg: 'Calculating ATS score with AI reasoning...', delay: 8000 },
+    { id: 'ls-4', msg: 'Generating BEFORE → AFTER improvements...', delay: 12000 },
+    { id: 'ls-5', msg: 'Building actionable suggestions...', delay: 16000 },
+  ];
+
+  async function animateLoadingSteps() {
+    // Start the actual API call immediately
+    const analysisPromise = callAnalyzeAPI();
+
+    // Animate steps based on timing
+    for (let i = 0; i < LOADING_STEPS.length; i++) {
+      const step = LOADING_STEPS[i];
+      document.getElementById(step.id).className = 'loading-step active';
+      document.getElementById(step.id).querySelector('.step-check').textContent = '⟳';
+      document.getElementById('loading-msg').textContent = step.msg;
+
+      if (i > 0) {
+        const prev = LOADING_STEPS[i-1];
+        document.getElementById(prev.id).className = 'loading-step done';
+        document.getElementById(prev.id).querySelector('.step-check').textContent = '✅';
+      }
+
+      if (i < LOADING_STEPS.length - 1) {
+        // Wait for next step's delay or resolution
+        await new Promise(r => setTimeout(r, step.delay - (i > 0 ? LOADING_STEPS[i-1].delay : 0)));
+      }
+    }
+
+    // Wait for actual API call
+    try {
+      const data = await analysisPromise;
+      // Mark last step done
+      const lastStep = LOADING_STEPS[LOADING_STEPS.length - 1];
+      document.getElementById(lastStep.id).className = 'loading-step done';
+      document.getElementById(lastStep.id).querySelector('.step-check').textContent = '✅';
+      document.getElementById('loading-msg').textContent = '✅ Analysis complete!';
+
+      await new Promise(r => setTimeout(r, 800));
+      state.analysisData = data;
+      renderResults(data);
+    } catch (err) {
+      console.error("❌ Full error:", err);
+      document.getElementById('loading-overlay').classList.remove('active');
+      document.getElementById('global-error').style.display = 'block';
+      document.getElementById('global-error-msg').textContent = `🔴 ${err.message || 'Analysis failed. Please check your inputs and try again.'}`;
+      document.getElementById('panel-results').classList.add('active');
+    }
+  }
+
+  async function callAnalyzeAPI() {
+    try {
+      const res = await apiFetch('/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resumeText: state.resumeText,
+          jobDescription: state.jobDescription,
+        })
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("API Error Response:", errorText);
+        try {
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.error || `API Error: ${res.status}`);
+        } catch (e) {
+          throw new Error(`API Error (${res.status}): ${errorText.substring(0, 200)}`);
+        }
+      }
+
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`Invalid response type: ${contentType}. Expected JSON.`);
+      }
+
+      const data = await res.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Analysis failed without error message');
+      }
+
+      if (!data.data) {
+        throw new Error('Analysis returned no data');
+      }
+
+      return data.data;
+    } catch (err) {
+      console.error("❌ Analysis API Error:", err);
+      throw err;
+    }
+  }
+
+  // ─── Render Results ───────────────────────────────────────────────────
+  function renderResults(data) {
+    const { resumeData, matchData, atsScore, improvements, suggestions } = data;
+
+    renderProfileStrip(resumeData);
+    renderATSScore(atsScore, matchData);
+    renderMatchingSkills(matchData);
+    renderMissingSkills(matchData);
+    renderAlignmentReasoning(matchData);
+    renderSuggestions(suggestions);
+    renderImprovements(improvements, resumeData);
+
+    document.getElementById('loading-overlay').classList.remove('active');
+    document.getElementById('panel-results').classList.add('active');
+
+    // Enable tabs
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById(`tab-${['upload','jd','results','cover'][i-1]}`).classList.remove('disabled');
+    }
+    goToStep(3);
+  }
+
+  function renderProfileStrip(rd) {
+    const strip = document.getElementById('profile-strip');
+    if (!rd) return;
+    const items = [
+      { label: rd.personal?.name || 'Candidate', type: 'blue' },
+      { label: rd.seniorityLevel || 'N/A', type: 'purple' },
+      { label: rd.industryDomain || 'N/A', type: 'green' },
+      { label: `${rd.totalExperienceYears || '?'} yrs exp`, type: 'orange' },
+    ];
+    strip.innerHTML = items.map(i => `<span class="badge badge-${i.type}">${i.label}</span>`).join('');
+  }
+
+  function renderATSScore(ats, match) {
+    if (!ats) return;
+    const score = ats.totalScore || 0;
+    const num = document.getElementById('ats-score-num');
+    const ring = document.getElementById('ats-ring-prog');
+    const circumference = 339.3;
+    const offset = circumference - (score / 100) * circumference;
+
+    num.textContent = score;
+
+    const scoreClass = score >= 70 ? 'high' : score >= 45 ? 'medium' : 'low';
+    const scoreColor = score >= 70 ? 'var(--accent-3)' : score >= 45 ? 'var(--accent-warn)' : 'var(--accent-danger)';
+    num.style.color = scoreColor;
+    ring.className = `ats-ring-prog ${scoreClass}`;
+
+    setTimeout(() => { ring.style.strokeDashoffset = offset; }, 100);
+
+    document.getElementById('ats-verdict').textContent = `${ats.grade || ''} — ${ats.verdict || ''}`;
+    document.getElementById('ats-explanation').textContent = ats.scoreExplanation || '';
+    document.getElementById('ats-explanation-full').textContent = ats.scoreExplanation || '';
+
+    // Component scores
+    const comps = document.getElementById('ats-components');
+    if (ats.componentScores) {
+      comps.innerHTML = Object.entries(ats.componentScores).map(([key, val]) => `
+        <div class="ats-comp">
+          <div class="ats-comp-name">${formatKey(key)}</div>
+          <div class="ats-comp-score">${val.score}/${val.max}</div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" style="width:0%;--target:${(val.score/val.max)*100}%"></div>
+          </div>
+        </div>
+      `).join('');
+      setTimeout(() => {
+        document.querySelectorAll('.progress-bar-fill').forEach(el => {
+          el.style.width = el.style.getPropertyValue('--target') || '0%';
+        });
+      }, 200);
+    }
+
+    // Match bar
+    const matchPct = match?.overallMatchPercentage || 0;
+    document.getElementById('match-pct').textContent = `${matchPct}%`;
+    setTimeout(() => { document.getElementById('match-bar-fill').style.width = `${matchPct}%`; }, 200);
+  }
+
+  function renderMatchingSkills(match) {
+    const list = document.getElementById('matching-skills-list');
+    const count = document.getElementById('match-count');
+    if (!match?.matchingSkills) return;
+    count.textContent = match.matchingSkills.length;
+    list.innerHTML = match.matchingSkills.map(s => `
+      <span class="skill-chip chip-green" title="${s.semanticConfidence || ''} confidence · ${s.note || ''}">
+        ✓ ${s.skill}
+      </span>
+    `).join('');
+  }
+
+  function renderMissingSkills(match) {
+    const list = document.getElementById('missing-skills-list');
+    const count = document.getElementById('missing-count');
+    if (!match?.missingSkills) return;
+    count.textContent = match.missingSkills.length;
+    list.innerHTML = match.missingSkills.map(s => {
+      const chipClass = s.importance === 'Critical' ? 'chip-red' : s.importance === 'Important' ? 'chip-orange' : 'chip-blue';
+      return `<span class="skill-chip ${chipClass}" title="${s.jobContext || ''} · ${s.recommendation || ''}">
+        ${s.importance === 'Critical' ? '❌' : s.importance === 'Important' ? '⚠️' : '○'} ${s.skill}
+      </span>`;
+    }).join('');
+  }
+
+  function renderAlignmentReasoning(match) {
+    if (!match) return;
+    document.getElementById('alignment-reasoning').textContent = match.alignmentReasoning || 'No alignment data available.';
+    if (match.redFlags && match.redFlags.length > 0) {
+      document.getElementById('red-flags-wrap').style.display = 'block';
+      document.getElementById('red-flags').innerHTML = match.redFlags.map(f =>
+        `<div style="font-size:12px;color:var(--accent-danger);padding:3px 0">• ${f}</div>`
+      ).join('');
+    }
+  }
+
+  function renderSuggestions(sugg) {
+    if (!sugg?.suggestions) return;
+    const list = document.getElementById('suggestions-list');
+    document.getElementById('sug-count').textContent = sugg.suggestions.length;
+
+    list.innerHTML = sugg.suggestions.map(s => {
+      const priorityClass = s.priority === 'Critical' ? 'badge-red' : s.priority === 'High' ? 'badge-orange' : s.priority === 'Medium' ? 'badge-blue' : 'badge-purple';
+      const catClass = {
+        'Skills Gap': 'badge-red',
+        'Content Quality': 'badge-orange',
+        'Missing Metrics': 'badge-orange',
+        'Weak Phrasing': 'badge-orange',
+        'Keyword Optimization': 'badge-blue',
+      }[s.category] || 'badge-purple';
+
+      return `
+        <div class="suggestion-item">
+          <div class="sug-header">
+            <div>
+              <div class="sug-title">${s.title}</div>
+              <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+                <span class="badge ${priorityClass}" style="font-size:9px">${s.priority}</span>
+                <span class="badge ${catClass}" style="font-size:9px">${s.category}</span>
+                ${s.estimatedAtsPointGain ? `<span class="badge badge-green" style="font-size:9px">+${s.estimatedAtsPointGain} ATS pts</span>` : ''}
+              </div>
+            </div>
+          </div>
+          ${s.currentIssue ? `<div class="sug-body">🔍 <strong>Issue:</strong> ${s.currentIssue}</div>` : ''}
+          ${s.reasoning ? `<div class="sug-reasoning">🧠 ${s.reasoning}</div>` : ''}
+          ${s.howToFix ? `<div class="sug-how">✅ <strong>How to fix:</strong> ${s.howToFix}</div>` : ''}
+          ${s.exampleBefore && s.exampleAfter ? `
+            <button class="collapse-btn" onclick="toggleCollapse(this)" style="margin-top:8px">▼ See example</button>
+            <div class="collapse-content">
+              <div class="before-after" style="margin-top:8px">
+                <div class="ba-box ba-before"><div class="ba-label">Before</div><div class="ba-text">${s.exampleBefore}</div></div>
+                <div class="ba-box ba-after"><div class="ba-label">After</div><div class="ba-text">${s.exampleAfter}</div></div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+
+    // Quick wins
+    if (sugg.quickWins && sugg.quickWins.length) {
+      document.getElementById('quickwins-box').style.display = 'block';
+      document.getElementById('quickwins-list').innerHTML = sugg.quickWins.map(w =>
+        `<div class="quickwins-item">${w}</div>`
+      ).join('');
+    }
+  }
+
+  function renderImprovements(imp, resumeData) {
+    if (!imp) return;
+
+    // Summary
+    const summaryBA = document.getElementById('imp-summary-ba');
+    if (imp.improvedSummary) {
+      summaryBA.innerHTML = `
+        <div class="ba-box ba-before">
+          <div class="ba-label">Before</div>
+          <div class="ba-text">${imp.improvedSummary.before || 'N/A'}</div>
+        </div>
+        <div class="ba-box ba-after">
+          <div class="ba-label">After</div>
+          <div class="ba-text">${imp.improvedSummary.after || 'N/A'}</div>
+          ${imp.improvedSummary.changeReason ? `<div class="ba-reason">💡 ${imp.improvedSummary.changeReason}</div>` : ''}
+        </div>
+      `;
+    }
+
+    // Bullet points
+    const bullList = document.getElementById('imp-bullets-list');
+    if (imp.improvedBulletPoints && imp.improvedBulletPoints.length) {
+      bullList.innerHTML = imp.improvedBulletPoints.map(b => `
+        <div style="margin-bottom:14px">
+          ${b.context ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;font-weight:700">${b.context}</div>` : ''}
+          <div class="before-after">
+            <div class="ba-box ba-before">
+              <div class="ba-label">Before</div>
+              <div class="ba-text">${b.before}</div>
+            </div>
+            <div class="ba-box ba-after">
+              <div class="ba-label">After</div>
+              <div class="ba-text">${b.after}</div>
+              ${b.improvement ? `<div class="ba-reason">🔧 ${b.improvement}</div>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      bullList.innerHTML = `<div style="color:var(--text-muted);font-size:13px">No bullet improvements generated.</div>`;
+    }
+
+    // Skills section
+    const skillsBA = document.getElementById('imp-skills-ba');
+    if (imp.improvedSkillsSection) {
+      skillsBA.innerHTML = `
+        <div class="ba-box ba-before">
+          <div class="ba-label">Before</div>
+          <div class="ba-text">${imp.improvedSkillsSection.before || 'N/A'}</div>
+        </div>
+        <div class="ba-box ba-after">
+          <div class="ba-label">After</div>
+          <div class="ba-text">${imp.improvedSkillsSection.after || 'N/A'}</div>
+          ${imp.improvedSkillsSection.changeReason ? `<div class="ba-reason">💡 ${imp.improvedSkillsSection.changeReason}</div>` : ''}
+        </div>
+      `;
+    }
+
+    // New sections
+    if (imp.suggestedNewSections && imp.suggestedNewSections.length) {
+      document.getElementById('imp-new-sections').innerHTML = `
+        <div style="font-size:12px;font-weight:700;color:var(--accent-2);margin:16px 0 10px;letter-spacing:0.05em">➕ SUGGESTED NEW SECTIONS</div>
+        ${imp.suggestedNewSections.map(s => `
+          <div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.15);border-radius:var(--radius-md);padding:14px;margin-bottom:10px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px">${s.section}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${s.reason}</div>
+            <div style="font-size:12px;color:var(--text-secondary)">${s.content}</div>
+          </div>
+        `).join('')}
+      `;
+    }
+  }
+
+  // ─── Improvement Tabs ─────────────────────────────────────────────────
+  function switchImprovementTab(tab, el) {
+    document.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.inner-panel').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById(`imp-${tab}`).classList.add('active');
+  }
+
+  // ─── Cover Letter ─────────────────────────────────────────────────────
+  async function loadCoverLetter() {
+    if (state.coverLetterData) {
+      renderCoverLetter(state.coverLetterData);
+      return;
+    }
+
+    document.getElementById('cover-loading').style.display = 'block';
+    document.getElementById('cover-content').style.display = 'none';
+
+    try {
+      const res = await apiFetch('/generate-cover-letter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resumeText: state.resumeText,
+          jobDescription: state.jobDescription,
+          resumeData: state.analysisData?.resumeData,
+          matchData: state.analysisData?.matchData,
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error);
+      state.coverLetterData = data.data;
+      renderCoverLetter(data.data);
+    } catch (err) {
+      document.getElementById('cover-loading').innerHTML = `
+        <div style="color:var(--accent-danger);font-size:14px">
+          ❌ Failed to generate cover letter: ${err.message}<br>
+          <button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="loadCoverLetter()">🔄 Retry</button>
+        </div>
+      `;
+    }
+  }
+
+  function renderCoverLetter(data) {
+    document.getElementById('cover-loading').style.display = 'none';
+    document.getElementById('cover-content').style.display = 'block';
+
+    const cl = data.coverLetter || {};
+    document.getElementById('cover-subject').textContent = cl.subject || 'Application for Position';
+
+    const body = [cl.salutation, '', cl.body, '', cl.closing, cl.signature].filter(Boolean).join('\n');
+    document.getElementById('cover-letter-body').textContent = body;
+
+    document.getElementById('cover-strategy').textContent = data.writingStrategy || '';
+
+    if (data.keyPointsHighlighted?.length) {
+      document.getElementById('cover-highlights').innerHTML = data.keyPointsHighlighted.map(p =>
+        `<span class="badge badge-blue">✓ ${p}</span>`
+      ).join('');
+    }
+  }
+
+  // Override goToStep to load cover letter on step 4
+  const _origGoToStep = goToStep;
+  // eslint-disable-next-line no-func-assign
+  goToStep = function(step) {
+    _origGoToStep(step);
+    if (step === 4 && state.analysisData) {
+      loadCoverLetter();
+    }
+  };
+
+  // ─── Utilities ────────────────────────────────────────────────────────
+  function formatKey(k) {
+    return k.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase());
+  }
+
+  function copyText(id, btn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    navigator.clipboard.writeText(el.textContent || el.innerText).then(() => {
+      btn.textContent = '✅ Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function copyElement(id, btn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    navigator.clipboard.writeText(el.textContent || el.innerText).then(() => {
+      btn.textContent = '✅ Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function toggleCollapse(btn) {
+    const content = btn.nextElementSibling;
+    content.classList.toggle('open');
+    btn.textContent = content.classList.contains('open') ? '▲ Hide example' : '▼ See example';
+  }
+
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    document.getElementById('toast-icon').textContent = type === 'success' ? '✅' : '❌';
+    toast.className = `toast show ${type}`;
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // ─── Downloads ────────────────────────────────────────────────────────
+  function downloadCoverLetter() {
+    const body = document.getElementById('cover-letter-body').textContent;
+    const subject = document.getElementById('cover-subject').textContent;
+    const blob = new Blob([subject + '\n\n' + body], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'cover-letter.txt'; a.click();
+    showToast('Cover letter downloaded!');
+  }
+
+  function downloadImprovedResume() {
+    if (!state.analysisData?.improvements) { showToast('Run analysis first', 'error'); return; }
+    const imp = state.analysisData.improvements;
+    const rd = state.analysisData.resumeData;
+    const name = rd?.personal?.name || 'Candidate';
+    let content = `IMPROVED RESUME — ${name}\n${'='.repeat(50)}\n\n`;
+    if (imp.improvedSummary?.after) content += `PROFESSIONAL SUMMARY\n${imp.improvedSummary.after}\n\n`;
+    if (imp.improvedBulletPoints?.length) {
+      content += `KEY EXPERIENCE HIGHLIGHTS\n`;
+      imp.improvedBulletPoints.forEach(b => { content += `• ${b.after}\n`; });
+      content += '\n';
+    }
+    if (imp.improvedSkillsSection?.after) content += `SKILLS\n${imp.improvedSkillsSection.after}\n`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = 'improved-resume.txt'; a.click();
+    showToast('Improved resume downloaded!');
+  }
+
+  // ─── Health check on load ─────────────────────────────────────────────
+  (async () => {
+    try {
+      const res = await apiFetch('/health');
+      const data = await res.json();
+      const status = document.getElementById('nav-status');
+      if (data.gemini === 'configured') {
+        status.textContent = '● API Connected';
+        status.style.color = 'var(--accent-3)';
+      } else {
+        status.textContent = '⚠️ API Key Missing';
+        status.style.color = 'var(--accent-warn)';
+      }
+    } catch {
+      document.getElementById('nav-status').textContent = '● Connecting...';
+    }
+  })();
+</script>
+</body>
+</html>
