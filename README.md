@@ -35,49 +35,6 @@ ai-resume-analyzer/
 
 ---
 
-## ⚙️ Setup Instructions
-
-### Prerequisites
-- Node.js v18+ ([download](https://nodejs.org))
-- Google Gemini API Key (free at [aistudio.google.com](https://aistudio.google.com/app/apikey))
-
-### 1. Clone / Download the Project
-```bash
-cd ai-resume-analyzer
-```
-
-### 2. Install Backend Dependencies
-```bash
-cd backend
-npm install
-```
-
-### 3. Configure Environment Variables
-```bash
-# In the /backend folder:
-cp .env.example .env
-```
-Open `.env` and add your key:
-```
-GEMINI_API_KEY=your_actual_gemini_api_key_here
-PORT=5000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5000
-```
-
-### 4. Start the Server
-```bash
-# Development (auto-restart on changes)
-npm run dev
-
-# Production
-npm start
-```
-
-### 5. Open the App
-Navigate to: **http://localhost:5000**
-
----
 
 ## 🔌 API Endpoints
 
