@@ -179,24 +179,7 @@ COVER LETTER WRITING RULES:
 
 ---
 
-## 🎓 Viva Talking Points
 
-1. **Why Gemini over keyword matching?**
-   → Keyword matching fails on synonyms and context. Gemini understands that "architected microservices" implies Docker, Kubernetes, REST APIs.
-
-2. **How is context maintained between stages?**
-   → `runFullAnalysis()` passes `matchData` to `generateATSScore()` so Gemini doesn't re-compare — it reasons on top of prior analysis.
-
-3. **What is prompt engineering here?**
-   → Each prompt has: (a) a role persona, (b) explicit rules, (c) a JSON schema, (d) semantic reasoning directives.
-
-4. **How does the ATS score differ from simple scoring?**
-   → It uses 5 weighted components, each justified with reasoning, not just counting keyword hits.
-
-5. **What makes the cover letter "human-like"?**
-   → The prompt explicitly forbids clichés ("I am writing to apply..."), requires specific resume evidence, and instructs tonal authenticity.
-
----
 
 ## 📦 Dependencies
 
