@@ -153,4 +153,3 @@ COVER LETTER WRITING RULES:
 
 ---
 
-*Built for 3rd Year B.Tech CSE — Generative AI Lab Project*
